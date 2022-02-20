@@ -1,0 +1,12 @@
+/node_modules
+/test
+/build
+/investors
+/migrations
+bs-config.json
+.secret
+.bsc-api
+.vscode
+.DS_Store
+.bscapikey
+package-lock.json
