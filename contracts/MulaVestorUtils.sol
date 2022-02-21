@@ -13,7 +13,8 @@ contract MulaVestorUtils is Ownable{
     require(msg.sender == _operator, "You can not use this vault");
     _;
   }
-  mapping(VestingStages => uint256) provisionDates; 
+  mapping(VestingStages => uint256) provisionDates;
+  mapping(address => bool) public investors;  
 
   constructor()Ownable() {
   }
@@ -32,7 +33,7 @@ contract MulaVestorUtils is Ownable{
     return true;
   }
 
-  function updateVestingDates(uint256 firstListingDate) public {
+  function setVestingDates(uint256 firstListingDate) public {
       provisionDates[VestingStages.M1] =firstListingDate + 30 days;
       provisionDates[VestingStages.M2] =firstListingDate + (2 *30 days);
       provisionDates[VestingStages.M3] =firstListingDate + (3 *30 days);
@@ -40,6 +41,35 @@ contract MulaVestorUtils is Ownable{
       provisionDates[VestingStages.M6] =firstListingDate + (6 *30 days);
       provisionDates[VestingStages.M12] =firstListingDate + (12 *30 days);
   }
+  
+  function getVestingDates(uint256 vestStage) public view returns (uint256){
+    uint256 vestDate; 
+    
+    if(uint(VestingStages.M1) == vestStage){ 
+        vestDate =provisionDates[VestingStages.M1];
+    }
+    if(uint(VestingStages.M2) == vestStage){
+        vestDate =provisionDates[VestingStages.M2]; 
+    }
+    if(uint(VestingStages.M3) == vestStage){
+        vestDate =provisionDates[VestingStages.M3]; 
+    }
+    if(uint(VestingStages.M4) == vestStage){
+        vestDate =provisionDates[VestingStages.M4]; 
+    }
+    if(uint(VestingStages.M6) == vestStage){
+        vestDate =provisionDates[VestingStages.M6]; 
+    }
+    if(uint(VestingStages.M12) == vestStage){
+        vestDate =provisionDates[VestingStages.M12]; 
+    }
+    return vestDate;
+  }
+
+  function isInvestor(address investor) public view returns (bool){
+    return investors[investor];
+  }
+  
 
   function calculatePercent(uint numerator, uint denominator) internal  pure returns (uint256){
     return (denominator * (numerator * 100) ) /10000;

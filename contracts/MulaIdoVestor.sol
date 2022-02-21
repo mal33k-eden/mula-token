@@ -7,13 +7,14 @@ contract MulaIdoVestor is MulaVestorUtils{
   
   mapping(address => mapping(VestingStages=>bool)) public tracker; 
   mapping(address => uint256) public investment; 
+  
  
   event LogVestingWithdrawal(address beneficiary, uint256 amount);
   constructor(){
     
   }
   
-  function getInvestment(address beneficiary) public view returns(uint256) {
+  function getInvestmentTotal(address beneficiary) public view returns(uint256) {
     return investment[beneficiary];
   }
   function getVestingDetails(uint256 vestStage, address beneficiary) public view returns (uint256,bool){
@@ -50,13 +51,11 @@ contract MulaIdoVestor is MulaVestorUtils{
   function recordInvestment(address beneficiary, uint256 newTotal) onlyOperator public returns(bool) {
     uint256 _total = investment[beneficiary];
     investment[beneficiary] = _total + newTotal;
+    investors[beneficiary]= true;
     return true;
   }
 
-  function updateVestingDetails(uint256 vestStage, address beneficiary) public returns (uint256,bool){
-    uint256 vestDate;
-    bool status;
-    
+  function updateVestingDetails(uint256 vestStage, address beneficiary) internal returns (bool){
     if(uint(VestingStages.M1) == vestStage){
       tracker[beneficiary][VestingStages.M1] = true;
     }
@@ -69,19 +68,26 @@ contract MulaIdoVestor is MulaVestorUtils{
     if(uint(VestingStages.M6) == vestStage){
       tracker[beneficiary][VestingStages.M6] = true;
     }
-    return (vestDate,status);
+    return true;
   }
 
   function withdrawInvestment(uint256 vestStage) public returns(bool success) {
+    
+    require(isInvestor(msg.sender), 'Sorry! you are not an investor.');
     (
       uint256 vestDate,
       bool status
     ) = getVestingDetails(vestStage,msg.sender);
     require(vestDate <= block.timestamp,'vault still locked');
-    require(!status,'you taken your investment for this month');
+    require(!status,'you have taken your investment for this month');
+    
     uint256 total = investment[msg.sender];
     uint256 twentyPercent = calculatePercent(20,total) ;
-    require(_token.transfer(msg.sender, twentyPercent));
+
+    require(updateVestingDetails(vestStage,msg.sender),'could not update investor details');
+    
+    require(_token.transfer(msg.sender, twentyPercent),'could not make transfers at this time');
+    
     emit LogVestingWithdrawal(msg.sender, twentyPercent);
     return true;
   } 
