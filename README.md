@@ -4,7 +4,7 @@ This repo contains the code for the Mula Finance token (MULA) and some associate
 MulaToken.sol
 MulaToken.sol is an ERC20 token that represents the cryptographic right to purchase MULA tokens. Alongside ERC-20 and full-token pausing.
 
-Etherscan
+BSC-SCAN
 
 Transfer + TransferFrom
 The only other thing in this contract is a wrapper around the ERC20 transfer and transferFrom functions. The only thing that happens is that we ensure that the transfers can only be made after the pause staged, and we also return the bool result of the transfer so it can be used with SafeERC20.
