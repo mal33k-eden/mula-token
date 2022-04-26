@@ -3,20 +3,17 @@ pragma solidity >=0.4.22 <0.9.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./MulaTokenUtils.sol";
 
-contract MulaVestorUtils is Ownable{
+contract MulaVestorUtils is MulaTokenUtils{
   
-  enum VestingStages {M1,M2,M3,M4,M6,M12} 
+  enum VestingStages {TGE,M1,M2,M3,M4,M6,M12} 
   IERC20 public _token;
-  address _operator;
-  modifier onlyOperator {
-    require(msg.sender == _operator, "You can not use this vault");
-    _;
-  }
+ 
   mapping(VestingStages => uint256) provisionDates;
   mapping(address => bool) public investors;  
 
-  constructor()Ownable() {
+  constructor()  {
   }
 
 
@@ -24,27 +21,32 @@ contract MulaVestorUtils is Ownable{
     _token = token;
     return true;
   }
-  function getOperator() public view returns (address){
-    return _operator;
-  }
-
-  function setOperator(address operator) public onlyOwner() returns (bool){
-    _operator = operator;
-    return true;
-  }
+   
+ 
 
   function setVestingDates(uint256 firstListingDate) public {
-      provisionDates[VestingStages.M1] =firstListingDate + 30 days;
-      provisionDates[VestingStages.M2] =firstListingDate + (2 *30 days);
-      provisionDates[VestingStages.M3] =firstListingDate + (3 *30 days);
-      provisionDates[VestingStages.M4] =firstListingDate + (4 *30 days);
-      provisionDates[VestingStages.M6] =firstListingDate + (6 *30 days);
-      provisionDates[VestingStages.M12] =firstListingDate + (12 *30 days);
+      provisionDates[VestingStages.TGE] =firstListingDate;
+      // provisionDates[VestingStages.M1] =firstListingDate + 30 days;
+      // provisionDates[VestingStages.M2] =firstListingDate + (2 *30 days);
+      // provisionDates[VestingStages.M3] =firstListingDate + (3 *30 days);
+      // provisionDates[VestingStages.M4] =firstListingDate + (4 *30 days);
+      // provisionDates[VestingStages.M6] =firstListingDate + (6 *30 days);
+      // provisionDates[VestingStages.M12] =firstListingDate + (12 *30 days);
+
+      provisionDates[VestingStages.M1] =firstListingDate + 1 days;
+      provisionDates[VestingStages.M2] =firstListingDate + (2 *1 days);
+      provisionDates[VestingStages.M3] =firstListingDate + (3 *1 days);
+      provisionDates[VestingStages.M4] =firstListingDate + (4 *1 days);
+      provisionDates[VestingStages.M6] =firstListingDate + (6 *1 days);
+      provisionDates[VestingStages.M12] =firstListingDate + (12 *1 days);
   }
   
   function getVestingDates(uint256 vestStage) public view returns (uint256){
     uint256 vestDate; 
     
+    if(uint(VestingStages.TGE) == vestStage){ 
+        vestDate =provisionDates[VestingStages.TGE];
+    }
     if(uint(VestingStages.M1) == vestStage){ 
         vestDate =provisionDates[VestingStages.M1];
     }

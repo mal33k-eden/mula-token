@@ -10,3 +10,4 @@ bs-config.json
 .DS_Store
 .bscapikey
 package-lock.json
+truffle-config.js

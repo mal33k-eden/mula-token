@@ -45,17 +45,18 @@ module.exports = {
       development: {
       host: "127.0.0.1",     // Localhost (default: none)
       port: 7545,            // Standard Ethereum port (default: none)
-      network_id: "*",       // Any network (default: none)
+      network_id: "1337",       // Any network (default: none)
       },
       testnet: {
         //https://speedy-nodes-nyc.moralis.io/ebccb067e0667fe39551799d/bsc/testnet
+        // https://speedy-nodes-nyc.moralis.io/c616b98fdc8cbbd3b0ac478c/bsc/testnet
         provider: () => new HDWalletProvider(mnemonic, `wss://speedy-nodes-nyc.moralis.io/c616b98fdc8cbbd3b0ac478c/bsc/testnet/ws`),
         network_id: 97,
-        // gasPrice: 20000000000,
-        //gas:16990000,
-        confirmations: 10,
+        gasPrice: 20000000000,
+        gas:16990000,
+        // confirmations: 3,
         timeoutBlocks: 1500,
-        networkCheckTimeout: 1000000,
+        // networkCheckTimeout: 1000000,
         skipDryRun: true
       },
     // Another network with more advanced options...

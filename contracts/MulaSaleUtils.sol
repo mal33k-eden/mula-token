@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-contract MulaIdoUtils is Ownable {
-
+contract MulaSaleUtils is Ownable {
+    using SafeMath for uint256;
   //sale Stages
   enum CrowdsaleStage {PublicSale,Paused,Ended }
   // Default to presale stage
@@ -51,6 +52,7 @@ contract MulaIdoUtils is Ownable {
   function endTime() public view returns (uint256) {
       return _endTime;
   }
+
   function isOpen() public view returns (bool) {
       require(block.timestamp >= _startTime && block.timestamp <= _endTime ,"Crowdsale: not opened");
       require(stage != CrowdsaleStage.Paused && stage != CrowdsaleStage.Ended,"Crowdsale: not opened");
@@ -61,7 +63,6 @@ contract MulaIdoUtils is Ownable {
   }
 
   function extendTime(uint256 newEndTime) public onlyOwner {
-      require(!hasClosed(), "Crowdsale: close already");
       require(newEndTime > _endTime, "Crowdsale: new endtime must be after current endtime");
       _endTime = newEndTime;
       
@@ -69,8 +70,8 @@ contract MulaIdoUtils is Ownable {
 
     function _MulaReceiving(uint256 _weiSent, uint80 _roundId) public view returns (uint256 ){
         int _channelRate = 0;
-        // _channelRate  =  getBNBUSDPrice(_roundId);
-        _channelRate  =  39918000000;
+        _channelRate  =  getBNBUSDPrice(_roundId);
+        // _channelRate  =  39918000000;
         int _MulaRate = int(_rate)/(_channelRate/int(_crossDecimal));
         uint256 _weiMedRate =  uint256((_MulaRate * 10 **18 )/int(_crossDecimal));
         uint256 tempR = _weiSent/_weiMedRate;
@@ -90,6 +91,10 @@ contract MulaIdoUtils is Ownable {
          require(timeStamp > 0, "Round not complete");
          require(block.timestamp <= timeStamp + 1 days);
         return price;
+    }
+    function convertUsdToBNB(uint256 usd,uint80 _roundId) public view returns (uint256){
+        uint256 bnbPrice = uint256(getBNBUSDPrice(_roundId));
+        return  (usd.div(bnbPrice)).mul(_crossDecimal);
     }
   /**
     * @dev forwards funds to the sale Wallet

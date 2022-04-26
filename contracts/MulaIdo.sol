@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol"; 
 
-import "./MulaIdoUtils.sol";
+import "./MulaSaleUtils.sol";
 import "./MulaIdoVestor.sol";
 
 
-contract MulaIdoSale  is ReentrancyGuard,MulaIdoUtils{
-
+contract MulaIdo  is ReentrancyGuard,MulaSaleUtils{
   using SafeMath for uint256;
   IERC20  _tokenContract;
   MulaIdoVestor _vestor;
@@ -53,20 +52,23 @@ contract MulaIdoSale  is ReentrancyGuard,MulaIdoUtils{
         _postParticipation(msg.sender,_numberOfTokens);  
         return true;
     }
-    function participateUSDT(uint80 _roundId) public onlyWhileOpen returns(bool){
-        require(_USDTContract.allowance(msg.sender, address(this)) > 0);
-        //calculate number of tokens
-        uint usdVal  = _USDTContract.allowance(msg.sender, address(this));
-        uint bnbEquv = (usdVal.div(uint256(getBNBUSDPrice(_roundId)))).mul(_crossDecimal);
+    function participateUSDT(uint80 _roundId) public  onlyWhileOpen returns(bool){
+        uint256 usdVal = _USDTContract.allowance(msg.sender, address(this));
+        require(usdVal > 0,"no allowance created");
+
+        //calculate number of tokens 
+        uint256 bnbEquv = convertUsdToBNB(usdVal, _roundId);
         uint256 _numberOfTokens = _MulaReceiving(bnbEquv,_roundId);
-        //validate transaction
+        
+        // validate transaction
         _preValidateParticipation(_numberOfTokens, msg.sender);
         //receive Investment
-        require(_USDTContract.transferFrom(msg.sender, address(this), usdVal));
+        require(_USDTContract.transferFrom(msg.sender, address(this), usdVal),'transfer not successful');
         //distribute tokens 
         _processParticipationUSDT(msg.sender, _numberOfTokens,usdVal);
         //finalise sale
         _postParticipation(msg.sender,_numberOfTokens);
+
         
        return true;
     }
@@ -121,9 +123,10 @@ contract MulaIdoSale  is ReentrancyGuard,MulaIdoUtils{
         //forward funds to wallet
         require( _forwardBNBFunds()); 
         //forward 20% to investor
-        require(_tokenContract.transfer(recipient, calculatePercent(20, amount)));
+        //require(_tokenContract.transfer(recipient, calculatePercent(20, amount)));//send all to vault 
         //forward 80% to IDO vault 
-        require(_tokenContract.transfer(address(_vestor), calculatePercent(80, amount)));
+        //require(_tokenContract.transfer(address(_vestor), calculatePercent(80, amount)));
+        require(_tokenContract.transfer(address(_vestor), amount));
         //create investor record on vestor 
         require(_vestor.recordInvestment(recipient,amount));
         _weiRaisedBNB += amount;
@@ -132,9 +135,11 @@ contract MulaIdoSale  is ReentrancyGuard,MulaIdoUtils{
         //forward funds to wallet
         require( _forwardUSDTFunds(usdtInvestment));
         //forward 20% to investor
-        require(_tokenContract.transfer(recipient, calculatePercent(20, amount)));
+        //require(_tokenContract.transfer(recipient, calculatePercent(20, amount)));
         //forward 80% to IDO vault 
-        require(_tokenContract.transfer(address(_vestor), calculatePercent(80, amount)));
+        //require(_tokenContract.transfer(address(_vestor), calculatePercent(80, amount)));
+        //forward 100% to IDO vault 
+        require(_tokenContract.transfer(address(_vestor), amount));
         //create investor record on vestor 
         require(_vestor.recordInvestment(recipient,amount));
         _weiRaisedBUSD += amount;
