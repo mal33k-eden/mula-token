@@ -25,20 +25,24 @@ contract MulaVestorUtils is MulaTokenUtils{
  
 
   function setVestingDates(uint256 firstListingDate) public {
-      provisionDates[VestingStages.TGE] =firstListingDate;
-      // provisionDates[VestingStages.M1] =firstListingDate + 30 days;
-      // provisionDates[VestingStages.M2] =firstListingDate + (2 *30 days);
-      // provisionDates[VestingStages.M3] =firstListingDate + (3 *30 days);
-      // provisionDates[VestingStages.M4] =firstListingDate + (4 *30 days);
-      // provisionDates[VestingStages.M6] =firstListingDate + (6 *30 days);
-      // provisionDates[VestingStages.M12] =firstListingDate + (12 *30 days);
 
-      provisionDates[VestingStages.M1] =firstListingDate + 1 days;
-      provisionDates[VestingStages.M2] =firstListingDate + (2 *1 days);
-      provisionDates[VestingStages.M3] =firstListingDate + (3 *1 days);
-      provisionDates[VestingStages.M4] =firstListingDate + (4 *1 days);
-      provisionDates[VestingStages.M6] =firstListingDate + (6 *1 days);
-      provisionDates[VestingStages.M12] =firstListingDate + (12 *1 days);
+      provisionDates[VestingStages.TGE] =firstListingDate;
+
+      // live
+      provisionDates[VestingStages.M1] =firstListingDate + 30 days;
+      provisionDates[VestingStages.M2] =firstListingDate + (2 *30 days);
+      provisionDates[VestingStages.M3] =firstListingDate + (3 *30 days);
+      provisionDates[VestingStages.M4] =firstListingDate + (4 *30 days);
+      provisionDates[VestingStages.M6] =firstListingDate + (6 *30 days);
+      provisionDates[VestingStages.M12] =firstListingDate + (12 *30 days);
+
+      // TEST 
+      // provisionDates[VestingStages.M1] =firstListingDate + 1 days;
+      // provisionDates[VestingStages.M2] =firstListingDate + (2 *1 days);
+      // provisionDates[VestingStages.M3] =firstListingDate + (3 *1 days);
+      // provisionDates[VestingStages.M4] =firstListingDate + (4 *1 days);
+      // provisionDates[VestingStages.M6] =firstListingDate + (6 *1 days);
+      // provisionDates[VestingStages.M12] =firstListingDate + (12 *1 days);
   }
   
   function getVestingDates(uint256 vestStage) public view returns (uint256){

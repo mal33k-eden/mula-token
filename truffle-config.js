@@ -22,6 +22,7 @@
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 
 const fs = require('fs');
+require('dotenv').config()
 const mnemonic = fs.readFileSync(".secret").toString().trim();
 
 module.exports = {
@@ -48,9 +49,8 @@ module.exports = {
       network_id: "1337",       // Any network (default: none)
       },
       testnet: {
-        //https://speedy-nodes-nyc.moralis.io/ebccb067e0667fe39551799d/bsc/testnet
-        // https://speedy-nodes-nyc.moralis.io/c616b98fdc8cbbd3b0ac478c/bsc/testnet
-        provider: () => new HDWalletProvider(mnemonic, `wss://speedy-nodes-nyc.moralis.io/c616b98fdc8cbbd3b0ac478c/bsc/testnet/ws`),
+
+        provider: () => new HDWalletProvider(mnemonic,process.env.TESTNET),
         network_id: 97,
         gasPrice: 20000000000,
         gas:16990000,

@@ -122,10 +122,6 @@ contract MulaIdo  is ReentrancyGuard,MulaSaleUtils{
     function _processParticipationBNB(address recipient, uint256 amount) nonReentrant() internal{
         //forward funds to wallet
         require( _forwardBNBFunds()); 
-        //forward 20% to investor
-        //require(_tokenContract.transfer(recipient, calculatePercent(20, amount)));//send all to vault 
-        //forward 80% to IDO vault 
-        //require(_tokenContract.transfer(address(_vestor), calculatePercent(80, amount)));
         require(_tokenContract.transfer(address(_vestor), amount));
         //create investor record on vestor 
         require(_vestor.recordInvestment(recipient,amount));
@@ -133,12 +129,7 @@ contract MulaIdo  is ReentrancyGuard,MulaSaleUtils{
     }
     function _processParticipationUSDT(address recipient, uint256 amount,uint256 usdtInvestment) nonReentrant() internal{
         //forward funds to wallet
-        require( _forwardUSDTFunds(usdtInvestment));
-        //forward 20% to investor
-        //require(_tokenContract.transfer(recipient, calculatePercent(20, amount)));
-        //forward 80% to IDO vault 
-        //require(_tokenContract.transfer(address(_vestor), calculatePercent(80, amount)));
-        //forward 100% to IDO vault 
+        require( _forwardUSDTFunds(usdtInvestment)); 
         require(_tokenContract.transfer(address(_vestor), amount));
         //create investor record on vestor 
         require(_vestor.recordInvestment(recipient,amount));

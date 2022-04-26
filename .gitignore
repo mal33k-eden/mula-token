@@ -9,5 +9,5 @@ bs-config.json
 .vscode
 .DS_Store
 .bscapikey
+.env
 package-lock.json
-truffle-config.js
