@@ -19,25 +19,23 @@ contract MulaTokenUtils is Ownable{
         _;
     }
 
-
-
   constructor() Ownable()  {
   }
 
   /**white lsit address to be able to transact during crowdsale. **/
   function whitelistOperator(address _operator) onlyOwner() public { 
-      operators[_operator] = true;
+    operators[_operator] = true;
   }
   function isOperator(address _add) public view returns(bool) { 
-      if(operators[_add]){
-          return true;
-      }
-      return false;
+    return operators[_add];
   }
 
-  /** Allows only the owner to relase the tokens into the wild */
-  function releaseToken() onlyOwner() public {
-          released = true;       
+  /** Allows only the owner to update  tokens release into the wild */
+  function updateRelease() onlyOwner() public {
+    released = !released;       
+  }
+  function isRealease() onlyOwner() public view returns(bool){
+      return released;
   }
   
 }
