@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.9.0;
-
+pragma solidity >=0.8 <0.9.0;
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./MulaVestorUtils.sol";
 
 contract MulaIdoVestor is MulaVestorUtils{
-  
+  using SafeMath for uint256;
   mapping(address => mapping(VestingStages=>bool)) public tracker; 
   mapping(address => uint256) public investment; 
   
- 
-  event LogVestingWithdrawal(address beneficiary, uint256 amount);
-  constructor(){
+  constructor(IERC20 token)MulaVestorUtils(token){
     
   }
   
@@ -56,10 +54,12 @@ contract MulaIdoVestor is MulaVestorUtils{
 
     return (tge,m1,m2,m3,m6);
   }
-  function recordInvestment(address beneficiary, uint256 newTotal) onlyOperator public returns(bool) {
+  function recordInvestment(address beneficiary, uint256 newTotal) onlySaleContract public returns(bool) {
+    require(!isFirstListingDateSet, "you can not make any investments at this time.");
     uint256 _total = investment[beneficiary];
-    investment[beneficiary] = _total + newTotal;
+    investment[beneficiary] =_total.add(newTotal);
     investors[beneficiary]= true;
+    emit LogVestingRecord(beneficiary, newTotal);
     return true;
   }
 
@@ -84,7 +84,7 @@ contract MulaIdoVestor is MulaVestorUtils{
 
   function withdrawInvestment(uint256 vestStage) public returns(bool success) {
     
-    require(isInvestor(msg.sender), 'Sorry! you are not an investor.');
+    require(investors[msg.sender], 'Sorry! you are not an investor.');
     (
       uint256 vestDate,
       bool status

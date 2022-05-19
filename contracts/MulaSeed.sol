@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.9.0;
+pragma solidity >=0.8 <0.9.0;
 
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol"; 
@@ -10,8 +10,8 @@ import "./MulaSeedVestor.sol";
 
 contract MulaSeed  is ReentrancyGuard,MulaSaleUtils{
   using SafeMath for uint256;
-  IERC20  _tokenContract;
-  MulaSeedVestor _vestor;
+  IERC20  immutable _tokenContract;
+  MulaSeedVestor immutable _vestor;
   
   mapping(CrowdsaleStage=> mapping(address => uint256)) _receiving;
   mapping(CrowdsaleStage=> uint256) public CrowdsaleStageBalance;
@@ -20,7 +20,7 @@ contract MulaSeed  is ReentrancyGuard,MulaSaleUtils{
     * @dev Reverts if not in crowdsale time range.
     **/
     modifier onlyWhileOpen {
-        require(isOpen(), "IDO: not open");
+        require(isOpen(), "Sale: not open");
         _;
     }
 
@@ -30,21 +30,20 @@ contract MulaSeed  is ReentrancyGuard,MulaSaleUtils{
         MulaSeedVestor vestor,
         uint256 startingTime,
         uint256 endingTime,
-        address payable wallet
+        address payable wallet,
+        address _aggregator
     )
     ReentrancyGuard()
+    MulaSaleUtils(_aggregator,_USDT,startingTime,endingTime,wallet)
     { 
-        require(startingTime >= block.timestamp, "Crowdsale: start time is before current time");
-        require(endingTime > startingTime, "Crowdsale: start time is invalid");
+        require(startingTime >= block.timestamp, "Sale: start time is before current time");
+        require(endingTime > startingTime, "Sale: start time is invalid");
         _tokenContract = token;//link to token contract 
-        _USDTContract = _USDT; //link to token vault contract 
         _vestor = vestor; //ido vesting contract
-        _wallet = wallet;//token wallet 
-        _startTime = startingTime;//set periods management
-        _endTime = endingTime;//set periods management
+         
     }
-    function participateBNB(uint80 _roundId,address collector) payable public onlyWhileOpen returns (bool){
-        uint256 _numberOfTokens = _MulaReceiving(msg.value,_roundId);
+    function participateBNB(address collector) payable public nonReentrant() onlyWhileOpen returns (bool){
+        uint256 _numberOfTokens = _MulaReceiving(msg.value);
         _preValidateParticipation(_numberOfTokens, msg.sender);
         //require that the transaction is successful 
         _processParticipationBNB(collector, _numberOfTokens);
@@ -52,13 +51,12 @@ contract MulaSeed  is ReentrancyGuard,MulaSaleUtils{
         _postParticipation(msg.sender,_numberOfTokens);  
         return true;
     }
-    function participateUSDT(uint80 _roundId,address collector) public  onlyWhileOpen returns(bool){
+    function participateUSDT(address collector) public nonReentrant()  onlyWhileOpen returns(bool){
         uint256 usdVal = _USDTContract.allowance(msg.sender, address(this));
         require(usdVal > 0,"no allowance created");
 
         //calculate number of tokens 
-        uint256 bnbEquv = convertUsdToBNB(usdVal, _roundId);
-        uint256 _numberOfTokens = _MulaReceiving(bnbEquv,_roundId);
+        uint256 _numberOfTokens = _rate.mul(usdVal);
         
         // validate transaction
         _preValidateParticipation(_numberOfTokens, msg.sender);
@@ -89,6 +87,7 @@ contract MulaSeed  is ReentrancyGuard,MulaSaleUtils{
             CrowdsaleStageBalance[stage]=0;
             _rate = 0; //0.00 eth
         }
+        emit SaleStageUpdated(stage);
         return true;
     }
     
@@ -119,41 +118,42 @@ contract MulaSeed  is ReentrancyGuard,MulaSaleUtils{
         //require that participant giving is between the caped range per stage
         require(_isIndividualCapped(_participant,  _numberOfTokens),'request not within the cap range');
     }
-    function _processParticipationBNB(address recipient, uint256 amount) nonReentrant() internal{
+    function _processParticipationBNB(address recipient, uint256 amount)  internal{
         //forward funds to wallet
-        require( _forwardBNBFunds()); 
+        require( _forwardBNBFunds(),"Error sending BNB value. check your wallet balance"); 
         //forward 100% to investor
-        require(_tokenContract.transfer(address(_vestor), amount));
+        require(_tokenContract.transfer(address(_vestor), amount), "sending tokens to investors failed");
         //create investor record on vestor 
-        require(_vestor.recordInvestment(recipient,amount));
-        _weiRaisedBNB += amount;
+        require(_vestor.recordInvestment(recipient,amount),"investments not recorded");
+        _weiRaisedBNB = _weiRaisedBNB.add(amount);
     }
-    function _processParticipationUSDT(address recipient, uint256 amount,uint256 usdtInvestment) nonReentrant() internal{
+    function _processParticipationUSDT(address recipient, uint256 amount,uint256 usdtInvestment)   internal{
         //forward funds to wallet
-        require( _forwardUSDTFunds(usdtInvestment));
+        require( _forwardUSDTFunds(usdtInvestment),"Error sending USDT value. check your wallet balance");
         //forward 100% to IDO vault 
-        require(_tokenContract.transfer(address(_vestor), amount));
+        require(_tokenContract.transfer(address(_vestor), amount), "sending tokens to investors failed");
         //create investor record on vestor 
-        require(_vestor.recordInvestment(recipient,amount));
-        _weiRaisedBUSD += amount;
+        require(_vestor.recordInvestment(recipient,amount), "sending tokens to investors failed");
+        _weiRaisedBNB = _weiRaisedBNB.add(amount);
     }
-    function _postParticipation(address _participant, uint256 _numberOfTokens) nonReentrant() internal returns(bool){
+    function _postParticipation(address _participant, uint256 _numberOfTokens)  internal returns(bool){
         //record participant givings and receivings
-        require(_updateParticipantBalance(_participant,_numberOfTokens));
+        require(_updateParticipantBalance(_participant,_numberOfTokens),'not able to record participants giving');
         //track number of tokens sold  and amount raised
-        _tokensSold += _numberOfTokens;
+        _tokensSold= _tokensSold.add(_numberOfTokens);
         //subtract from crowdsale stage balance 
         return true;
     }
     //close IDO sale
-    function finalize() public onlyOwner{
+    function finalize(uint256 firstListingDate) public onlyOwner{
 
-        require(!isFinalized(), "Crowdsale: already finalized");
-        require(updateStage(2),"Crowdsale: should be marked as ended");
+        require(!isFinalized(), "Sale: already finalized");
+        require(updateStage(2),"Sale: should be marked as ended");
 
         //send the remaining sale tokens to the collection wallet 
         uint256 saleBal = _tokenContract.balanceOf(address(this));
         _tokenContract.transfer(_wallet,saleBal);
+        _vestor.setVestingDates(firstListingDate);
 
         _finalized = true;
     }

@@ -3,28 +3,27 @@ pragma solidity >=0.4.22 <0.9.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 contract MulaTokenUtils is Ownable{
   
-  mapping(address=>bool)operators;
+  mapping(address=>bool) private operators;
   /** If false we are are in transfer lock up period.*/
   bool public released = false;
   
   /** MODIFIER: Limits token transfer until the lockup period is over.*/
-    modifier canTransfer() {
-        if(!released) {
-            require(operators[msg.sender],"you are not permitted to make transactions, not an operator");
-        }
-        _;
+  modifier canTransfer() {
+    if(!released) {
+        require(isOperator(msg.sender),"Only operators can transfer at this time");
     }
-   modifier onlyOperator() {
-        require(operators[msg.sender],"you are not permitted to make transactions, not an operator");
-        _;
-    }
+    _;
+  }
+  modifier onlyOperator() {
+    require(isOperator(msg.sender),"You are not permitted to make transactions, not an operator");
+    _;
+  }
 
   constructor() Ownable()  {
   }
-
-  /**white lsit address to be able to transact during crowdsale. **/
-  function whitelistOperator(address _operator) onlyOwner() public { 
-    operators[_operator] = true;
+  /**white list address to be able to transact during crowdsale. **/
+  function whitelistOperator(address _operator, bool _status) onlyOwner() public { 
+    operators[_operator] = _status;
   }
   function isOperator(address _add) public view returns(bool) { 
     return operators[_add];
@@ -32,9 +31,10 @@ contract MulaTokenUtils is Ownable{
 
   /** Allows only the owner to update  tokens release into the wild */
   function updateRelease() onlyOwner() public {
-    released = !released;       
+    require(!released, "Once contract has been marked as released, it can not be reversed.");
+    released = true;       
   }
-  function isRealease() onlyOwner() public view returns(bool){
+  function isRelease() public view returns(bool){
       return released;
   }
   

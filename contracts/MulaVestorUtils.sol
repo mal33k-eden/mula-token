@@ -1,31 +1,33 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.9.0;
-
-import "@openzeppelin/contracts/access/Ownable.sol";
+pragma solidity >=0.8 <0.9.0;
+ 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./MulaTokenUtils.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MulaVestorUtils is MulaTokenUtils{
+contract MulaVestorUtils  is Ownable{
   
   enum VestingStages {TGE,M1,M2,M3,M4,M6,M12} 
-  IERC20 public _token;
- 
-  mapping(VestingStages => uint256) provisionDates;
-  mapping(address => bool) public investors;  
-
-  constructor()  {
+  IERC20 public immutable _token;
+  address public _saleContract;
+  bool public isSaleContractSet;
+  
+  mapping(VestingStages => uint256) public provisionDates;
+  mapping(address => bool)  public investors;
+  bool public isFirstListingDateSet;
+  
+  event LogVestingWithdrawal(address beneficiary, uint256 amount);
+  event LogVestingRecord(address beneficiary, uint256 amount);
+  modifier onlySaleContract() {
+      require(msg.sender==_saleContract,"you are not permitted to make transactions, only sale contract");
+      _;
   }
-
-
-  function updateTokenAddress(IERC20 token) public onlyOwner() returns (bool){
+  constructor(IERC20 token)Ownable()  {
     _token = token;
-    return true;
   }
-   
- 
 
-  function setVestingDates(uint256 firstListingDate) public {
-
+  function setVestingDates(uint256 firstListingDate) public  onlySaleContract{
+    
+      require(!isFirstListingDateSet,'First listing date has already been set.');
       provisionDates[VestingStages.TGE] =firstListingDate;
 
       // live
@@ -45,37 +47,17 @@ contract MulaVestorUtils is MulaTokenUtils{
       // provisionDates[VestingStages.M12] =firstListingDate + (12 *1 days);
   }
   
-  function getVestingDates(uint256 vestStage) public view returns (uint256){
-    uint256 vestDate; 
-    
-    if(uint(VestingStages.TGE) == vestStage){ 
-        vestDate =provisionDates[VestingStages.TGE];
-    }
-    if(uint(VestingStages.M1) == vestStage){ 
-        vestDate =provisionDates[VestingStages.M1];
-    }
-    if(uint(VestingStages.M2) == vestStage){
-        vestDate =provisionDates[VestingStages.M2]; 
-    }
-    if(uint(VestingStages.M3) == vestStage){
-        vestDate =provisionDates[VestingStages.M3]; 
-    }
-    if(uint(VestingStages.M4) == vestStage){
-        vestDate =provisionDates[VestingStages.M4]; 
-    }
-    if(uint(VestingStages.M6) == vestStage){
-        vestDate =provisionDates[VestingStages.M6]; 
-    }
-    if(uint(VestingStages.M12) == vestStage){
-        vestDate =provisionDates[VestingStages.M12]; 
-    }
+  function getVestingDates(VestingStages vestStage) public view returns (uint256){
+    uint256 vestDate = provisionDates[vestStage]; 
     return vestDate;
   }
 
-  function isInvestor(address investor) public view returns (bool){
-    return investors[investor];
+ /**white list address to be able to transact during crowdsale. **/
+  function setSaleContract(address saleContract) onlyOwner() public { 
+    require(!isSaleContractSet,"Sale contract set already");
+    _saleContract = saleContract;
+    isSaleContractSet =true;
   }
-  
 
   function calculatePercent(uint numerator, uint denominator) internal  pure returns (uint256){
     return (denominator * (numerator * 100) ) /10000;
