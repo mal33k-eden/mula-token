@@ -48,7 +48,8 @@ contract MulaSeed  is ReentrancyGuard,MulaSaleUtils{
         //require that the transaction is successful 
         _processParticipationBNB(collector, _numberOfTokens);
         
-        _postParticipation(msg.sender,_numberOfTokens);  
+        _postParticipation(msg.sender,_numberOfTokens); 
+        emit ParticipationEvent(msg.sender,_numberOfTokens);
         return true;
     }
     function participateUSDT(address collector) public nonReentrant()  onlyWhileOpen returns(bool){
@@ -66,8 +67,7 @@ contract MulaSeed  is ReentrancyGuard,MulaSaleUtils{
         _processParticipationUSDT(collector, _numberOfTokens,usdVal);
         //finalise sale
         _postParticipation(msg.sender,_numberOfTokens);
-
-        
+        emit ParticipationEvent(msg.sender,_numberOfTokens);
        return true;
     }
 

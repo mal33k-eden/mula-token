@@ -32,10 +32,12 @@ abstract contract MulaSaleUtils is Ownable {
     IERC20 public immutable _USDTContract;
     AggregatorV3Interface immutable public BNBUSD;
 
-    event BuyMula(address indexed _from,uint256 indexed _tokens,uint256  _value);
-    event ContributionCapsSet(uint256 _minContribution, uint256 _maxContribution);
+    event ContributionCapsSet(uint256 indexed _minContribution, uint256 indexed _maxContribution);
     event SaleIsFinalize(uint256 firstListingDate);
-    event SaleStageUpdated(CrowdsaleStage stage);
+    event SaleStageUpdated(CrowdsaleStage indexed stage);
+    event ParticipationEvent(address indexed investor,uint256 indexed tokens);
+    
+    
 
     address payable immutable public _wallet;
 
@@ -105,7 +107,7 @@ abstract contract MulaSaleUtils is Ownable {
         int _channelRate = 0;
         uint256 _cd = _crossDecimal;
         uint256 _weiConverter = 10 ** 18;
-        _channelRate  = getBNBUSDPrice();  
+        _channelRate  = 36359000000;//getBNBUSDPrice();  
         int _MulaRate = _rate.toInt256()/(_channelRate/_cd.toInt256());
         uint256 _weiMedRate =  ((_MulaRate * _weiConverter.toInt256() )/_cd.toInt256()).toUint256();
         uint256 tempR = _weiSent.div(_weiMedRate);

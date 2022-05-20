@@ -44,6 +44,7 @@ mapping(CrowdsaleStage=> uint256) public CrowdsaleStageBalance;
         //require that the transaction is successful 
         _processParticipationBNB(msg.sender, _numberOfTokens); 
         _postParticipation(msg.sender,_numberOfTokens);  
+        emit ParticipationEvent(msg.sender,_numberOfTokens);
         return true;
     }
     function participateUSDT() public  nonReentrant() onlyWhileOpen returns(bool){
@@ -59,6 +60,7 @@ mapping(CrowdsaleStage=> uint256) public CrowdsaleStageBalance;
         _processParticipationUSDT(msg.sender, _numberOfTokens,usdVal);
         //finalise sale
         _postParticipation(msg.sender,_numberOfTokens);
+        emit ParticipationEvent(msg.sender,_numberOfTokens);
         return true;
     }
 

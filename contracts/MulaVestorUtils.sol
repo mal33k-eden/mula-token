@@ -10,13 +10,13 @@ contract MulaVestorUtils  is Ownable{
   IERC20 public immutable _token;
   address public _saleContract;
   bool public isSaleContractSet;
-  
+  bool public isFirstListingDateSet;
+
   mapping(VestingStages => uint256) public provisionDates;
   mapping(address => bool)  public investors;
-  bool public isFirstListingDateSet;
-  
-  event LogVestingWithdrawal(address beneficiary, uint256 amount);
-  event LogVestingRecord(address beneficiary, uint256 amount);
+
+  event LogVestingWithdrawal(address indexed beneficiary, uint256 indexed amount);
+  event LogVestingRecord(address indexed beneficiary, uint256 indexed amount);
   modifier onlySaleContract() {
       require(msg.sender==_saleContract,"you are not permitted to make transactions, only sale contract");
       _;
@@ -28,9 +28,11 @@ contract MulaVestorUtils  is Ownable{
   function setVestingDates(uint256 firstListingDate) public  onlySaleContract{
     
       require(!isFirstListingDateSet,'First listing date has already been set.');
-      provisionDates[VestingStages.TGE] =firstListingDate;
-
+      //update isfirstlistingdate
+      isFirstListingDateSet=true; 
+      
       // live
+      provisionDates[VestingStages.TGE] =firstListingDate; 
       provisionDates[VestingStages.M1] =firstListingDate + 30 days;
       provisionDates[VestingStages.M2] =firstListingDate + (2 *30 days);
       provisionDates[VestingStages.M3] =firstListingDate + (3 *30 days);
